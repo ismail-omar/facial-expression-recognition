@@ -9,6 +9,10 @@ import '../services/face_quality_service.dart';
 import '../utils/image_utils.dart';
 import '../widgets/quality_warning_card.dart';
 
+import '../models/expression_prediction.dart';
+import '../services/expression_classifier_service.dart';
+import 'result_screen.dart';
+
 class PreviewScreen extends StatefulWidget {
   const PreviewScreen({
     required this.imageFile,
@@ -28,6 +32,12 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
   final FaceQualityService _faceQualityService =
       FaceQualityService();
+
+  final ExpressionClassifierService
+      _expressionClassifierService =
+      ExpressionClassifierService();
+
+  bool _isClassifying = false;
 
   bool _isProcessing = true;
   String? _errorMessage;
@@ -92,6 +102,10 @@ class _PreviewScreenState extends State<PreviewScreen> {
   }
 
   Future<void> _analyzeExpression() async {
+    if (_isClassifying) {
+      return;
+    }
+
     if (_qualityResult?.isValid != true ||
         _croppedFaceFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -104,21 +118,57 @@ class _PreviewScreenState extends State<PreviewScreen> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'TFLite classification will be added next.',
+    setState(() {
+      _isClassifying = true;
+    });
+
+    try {
+      final ExpressionPrediction prediction =
+          await _expressionClassifierService.predict(
+        _croppedFaceFile!,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ResultScreen(
+            originalImageFile: widget.imageFile,
+            croppedFaceFile: _croppedFaceFile!,
+            prediction: prediction,
+          ),
         ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Analysis failed: $error',
+        ),
+        backgroundColor: Colors.red,
       ),
     );
+  } finally {
+    if (mounted) {
+      setState(() {
+        _isClassifying = false;
+      });
+    }
   }
+}
 
   @override
   void dispose() {
     _faceDetectionService.dispose();
+    _expressionClassifierService.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -221,14 +271,28 @@ class _PreviewScreenState extends State<PreviewScreen> {
           const SizedBox(height: 28),
           FilledButton.icon(
             onPressed:
-                _qualityResult?.isValid == true
+                _qualityResult?.isValid == true &&
+                        !_isClassifying
                     ? _analyzeExpression
                     : null,
-            icon: const Icon(
-              Icons.psychology_rounded,
+            icon: _isClassifying
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(
+                    Icons.psychology_rounded,
+                  ),
+              label: Text(
+                _isClassifying
+                    ? 'Analyzing...'
+                    : 'Analyze Expression',
+               ),
             ),
-            label: const Text('Analyze Expression'),
-          ),
           const SizedBox(height: 12),
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
