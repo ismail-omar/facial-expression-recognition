@@ -42,6 +42,8 @@ class _PreviewScreenState extends State<PreviewScreen> {
   bool _isProcessing = true;
   String? _errorMessage;
 
+  bool _autoAnalysisStarted = false;
+
   List<Face> _faces = [];
   FaceQualityResult? _qualityResult;
   File? _croppedFaceFile;
@@ -89,6 +91,20 @@ class _PreviewScreenState extends State<PreviewScreen> {
         _croppedFaceFile = croppedFace;
         _isProcessing = false;
       });
+
+      if (qualityResult.isValid &&
+          croppedFace != null &&
+          !_autoAnalysisStarted) {
+        _autoAnalysisStarted = true;
+
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) {
+          if (mounted) {
+            _analyzeExpression();
+          }
+        },
+      );
+    }
     } catch (error) {
       if (!mounted) {
         return;
@@ -189,7 +205,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('Detecting and checking face...'),
+            Text('Checking face quality...'),
           ],
         ),
       );
@@ -290,7 +306,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
               label: Text(
                 _isClassifying
                     ? 'Analyzing...'
-                    : 'Analyze Expression',
+                    : 'Analyze Again',
                ),
             ),
           const SizedBox(height: 12),

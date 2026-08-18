@@ -16,7 +16,15 @@ class ExpressionPrediction {
 
   final int inferenceTimeMilliseconds;
 
-  bool get isLowConfidence => confidence < 0.35;
+  bool get isLowConfidence =>
+      confidence < 0.45;
+
+  bool get isMediumConfidence =>
+      confidence >= 0.45 &&
+      confidence < 0.70;
+
+  bool get isHighConfidence =>
+      confidence >= 0.70;
 
   List<MapEntry<String, double>> get sortedProbabilities {
     final entries = probabilities.entries.toList();

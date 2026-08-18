@@ -10,13 +10,13 @@ class SavedResultCard extends StatelessWidget {
   const SavedResultCard({
     required this.result,
     required this.onTap,
-    required this.onDelete,
+    this.onDelete,
     super.key,
   });
 
   final ExpressionResult result;
   final VoidCallback onTap;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -104,14 +104,20 @@ class SavedResultCard extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: onDelete,
-                tooltip: 'Delete',
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: AppColors.error,
+              if (onDelete != null)
+                IconButton(
+                  onPressed: onDelete,
+                  tooltip: 'Delete',
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: AppColors.error,
+                  ),
+                )
+              else
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textSecondary,
                 ),
-              ),
             ],
           ),
         ),

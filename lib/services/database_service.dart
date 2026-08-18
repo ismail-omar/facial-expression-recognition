@@ -3,6 +3,8 @@ import 'package:sqflite/sqflite.dart';
 
 import '../models/expression_result.dart';
 
+import '../models/expression_statistics.dart';
+
 class DatabaseService {
   DatabaseService._();
 
@@ -207,6 +209,88 @@ class DatabaseService {
 
     await db.close();
     _database = null;
+  }
+
+  Future<List<ExpressionResult>> getRecentResults({
+    int limit = 5,
+  }) async {
+    try {
+      final Database db = await database;
+
+      final List<Map<String, dynamic>> rows =
+          await db.query(
+        resultsTable,
+        orderBy: 'created_at DESC',
+        limit: limit,
+      );
+
+      return rows
+          .map(ExpressionResult.fromMap)
+          .toList();
+    } catch (error) {
+      throw DatabaseServiceException(
+        'Unable to load recent results: $error',
+      );
+    }
+  }
+
+  Future<ExpressionStatistics> getStatistics() async {
+    try {
+      final Database db = await database;
+
+      final List<Map<String, Object?>>
+          totalResult = await db.rawQuery(
+        '''
+        SELECT
+          COUNT(*) AS total,
+          AVG(confidence) AS average_confidence
+        FROM $resultsTable
+        ''',
+      );
+
+      final int total =
+          (totalResult.first['total'] as int?) ?? 0;
+
+      final double averageConfidence =
+          (totalResult.first['average_confidence']
+                      as num?)
+                  ?.toDouble() ??
+              0.0;
+
+      final List<Map<String, Object?>>
+          expressionRows = await db.rawQuery(
+        '''
+        SELECT
+          predicted_expression,
+          COUNT(*) AS count
+        FROM $resultsTable
+        GROUP BY predicted_expression
+        ORDER BY count DESC
+        ''',
+      );
+
+      final Map<String, int> expressionCounts = {};
+
+      for (final row in expressionRows) {
+        final String expression =
+            row['predicted_expression'] as String;
+
+        final int count =
+            (row['count'] as int?) ?? 0;
+
+        expressionCounts[expression] = count;
+      }
+
+      return ExpressionStatistics(
+        totalAnalyses: total,
+        expressionCounts: expressionCounts,
+        averageConfidence: averageConfidence,
+      );
+    } catch (error) {
+      throw DatabaseServiceException(
+        'Unable to load statistics: $error',
+      );
+    }
   }
 }
 
