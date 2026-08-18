@@ -1,12 +1,16 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 import '../models/expression_prediction.dart';
+import '../models/expression_result.dart';
+import '../services/database_service.dart';
+import '../services/image_storage_service.dart';
 import '../utils/constants.dart';
 import '../widgets/expression_probability_bar.dart';
 
-class ResultScreen extends StatelessWidget {
+class ResultScreen extends StatefulWidget {
   const ResultScreen({
     required this.originalImageFile,
     required this.croppedFaceFile,
@@ -19,14 +23,142 @@ class ResultScreen extends StatelessWidget {
   final ExpressionPrediction prediction;
 
   @override
+  State<ResultScreen> createState() =>
+      _ResultScreenState();
+}
+
+class _ResultScreenState
+    extends State<ResultScreen> {
+  final DatabaseService _databaseService =
+      DatabaseService.instance;
+
+  final ImageStorageService _storageService =
+      ImageStorageService();
+
+  final Uuid _uuid = const Uuid();
+
+  bool _isSaving = false;
+  bool _isSaved = false;
+
+  Future<void> _saveResult() async {
+    if (_isSaving || _isSaved) {
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    String? savedOriginalPath;
+    String? savedFacePath;
+
+    try {
+      final String resultId =
+          _uuid.v4();
+
+      final SavedImagePaths savedPaths =
+          await _storageService
+              .saveAnalysisImages(
+        resultId: resultId,
+        originalImageFile:
+            widget.originalImageFile,
+        croppedFaceFile:
+            widget.croppedFaceFile,
+      );
+
+      savedOriginalPath =
+          savedPaths.originalImagePath;
+
+      savedFacePath =
+          savedPaths.croppedFacePath;
+
+      final ExpressionResult result =
+          ExpressionResult(
+        id: resultId,
+        imagePath:
+            savedPaths.originalImagePath,
+        croppedFacePath:
+            savedPaths.croppedFacePath,
+        predictedExpression: widget
+            .prediction.predictedExpression,
+        confidence:
+            widget.prediction.confidence,
+        probabilities: Map<String, double>.from(
+          widget.prediction.probabilities,
+        ),
+        createdAt: DateTime.now(),
+      );
+
+      await _databaseService.insertResult(
+        result,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isSaving = false;
+        _isSaved = true;
+      });
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Result saved successfully.',
+          ),
+          backgroundColor:
+              AppColors.success,
+        ),
+      );
+    } catch (error) {
+      if (savedOriginalPath != null ||
+          savedFacePath != null) {
+        try {
+          await _storageService
+              .deleteAnalysisImages(
+            originalImagePath:
+                savedOriginalPath ?? '',
+            croppedFacePath:
+                savedFacePath ?? '',
+          );
+        } catch (_) {
+          // نحافظ على الخطأ الأصلي.
+        }
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isSaving = false;
+      });
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to save result: $error',
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final List<MapEntry<String, double>>
         sortedProbabilities =
-        prediction.sortedProbabilities;
+        widget.prediction.sortedProbabilities;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Analysis Result'),
+        title: const Text(
+          'Analysis Result',
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -36,23 +168,19 @@ class ResultScreen extends StatelessWidget {
                 CrossAxisAlignment.stretch,
             children: [
               _ResultHeader(
-                faceImageFile: croppedFaceFile,
-                expression:
-                    prediction.predictedExpression,
-                confidence:
-                    prediction.confidence,
+                faceImageFile:
+                    widget.croppedFaceFile,
+                expression: widget.prediction
+                    .predictedExpression,
+                confidence: widget
+                    .prediction.confidence,
               ),
               const SizedBox(height: 20),
-
-              if (prediction.isLowConfidence)
-                _LowConfidenceWarning(
-                  confidence:
-                      prediction.confidence,
-                ),
-
-              if (prediction.isLowConfidence)
+              if (widget.prediction
+                  .isLowConfidence) ...[
+                const _LowConfidenceWarning(),
                 const SizedBox(height: 20),
-
+              ],
               Row(
                 children: [
                   const Icon(
@@ -69,21 +197,18 @@ class ResultScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 20),
-
               ...sortedProbabilities.map(
                 (entry) {
                   return ExpressionProbabilityBar(
                     expression: entry.key,
                     probability: entry.value,
                     isHighest: entry.key ==
-                        prediction
+                        widget.prediction
                             .predictedExpression,
                   );
                 },
               ),
-
               const SizedBox(height: 8),
-
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -104,36 +229,42 @@ class ResultScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       'Inference time: '
-                      '${prediction.inferenceTimeMilliseconds} ms',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium,
+                      '${widget.prediction.inferenceTimeMilliseconds} ms',
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 24),
-
               FilledButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Local saving will be added next.',
+                onPressed:
+                    _isSaving || _isSaved
+                        ? null
+                        : _saveResult,
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 21,
+                        height: 21,
+                        child:
+                            CircularProgressIndicator(
+                          strokeWidth: 2.3,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Icon(
+                        _isSaved
+                            ? Icons
+                                .check_circle_rounded
+                            : Icons.save_rounded,
                       ),
-                    ),
-                  );
-                },
-                icon: const Icon(
-                  Icons.save_rounded,
+                label: Text(
+                  _isSaving
+                      ? 'Saving...'
+                      : _isSaved
+                          ? 'Result Saved'
+                          : 'Save Result',
                 ),
-                label: const Text('Save Result'),
               ),
-
               const SizedBox(height: 12),
-
               OutlinedButton.icon(
                 onPressed: () {
                   Navigator.of(context)
@@ -148,9 +279,7 @@ class ResultScreen extends StatelessWidget {
                   'Analyze Another Image',
                 ),
               ),
-
               const SizedBox(height: 14),
-
               Text(
                 'This result estimates the visible '
                 'facial expression and should not be '
@@ -236,7 +365,6 @@ class _ResultHeader extends StatelessWidget {
                 .titleLarge
                 ?.copyWith(
                   fontSize: 28,
-                  color: AppColors.textPrimary,
                 ),
           ),
         ],
@@ -256,11 +384,7 @@ class _ResultHeader extends StatelessWidget {
 
 class _LowConfidenceWarning
     extends StatelessWidget {
-  const _LowConfidenceWarning({
-    required this.confidence,
-  });
-
-  final double confidence;
+  const _LowConfidenceWarning();
 
   @override
   Widget build(BuildContext context) {
@@ -288,9 +412,9 @@ class _LowConfidenceWarning
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              'The model confidence is relatively low. '
-              'Try another image with clearer lighting '
-              'and a more visible facial expression.',
+              'The confidence is relatively low. '
+              'Try a clearer frontal image with '
+              'better lighting.',
             ),
           ),
         ],

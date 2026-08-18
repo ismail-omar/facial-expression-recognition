@@ -6,6 +6,8 @@ import '../services/image_picker_service.dart';
 import '../utils/constants.dart';
 import 'preview_screen.dart';
 
+import 'history_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -101,7 +103,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppConstants.appName),
+        title: const Text(
+          AppConstants.appName,
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'History',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) =>
+                      const HistoryScreen(),
+                ),
+              );
+            },
+            icon: const Icon(
+              Icons.history_rounded,
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(

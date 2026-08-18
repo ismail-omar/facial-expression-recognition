@@ -40,6 +40,9 @@ dependencies:
   path_provider: ^2.1.6
   path: ^1.9.1
   tflite_flutter: ^0.12.1
+  sqflite: ^2.4.3
+  intl: ^0.20.3
+  uuid: ^4.6.0
 
 dev_dependencies:
   flutter_test:

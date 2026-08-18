@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'utils/constants.dart';
 
+import 'services/database_service.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await DatabaseService.instance.database;
+  
   runApp(const ExpressionRecognitionApp());
 }
 
