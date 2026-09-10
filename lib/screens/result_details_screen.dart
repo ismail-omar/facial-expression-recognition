@@ -8,6 +8,7 @@ import '../services/database_service.dart';
 import '../services/image_storage_service.dart';
 import '../utils/constants.dart';
 import '../widgets/expression_probability_bar.dart';
+import '../utils/expression_ui.dart';
 
 class ResultDetailsScreen
     extends StatefulWidget {
@@ -144,6 +145,11 @@ class _ResultDetailsScreenState
       'dd MMMM yyyy • HH:mm:ss',
     ).format(widget.result.createdAt);
 
+    final Color expressionColor =
+        ExpressionUi.color(
+      widget.result.predictedExpression,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -189,25 +195,29 @@ class _ResultDetailsScreenState
               ),
             const SizedBox(height: 20),
             Text(
-              _formatExpression(
-                widget.result
-                    .predictedExpression,
+              ExpressionUi.label(
+                widget.result.predictedExpression,
               ),
               textAlign: TextAlign.center,
               style: Theme.of(context)
                   .textTheme
                   .headlineMedium
                   ?.copyWith(
-                    color: AppColors.primary,
+                      color: expressionColor,
+                      fontWeight: FontWeight.bold,
                   ),
-            ),
+              ),
             const SizedBox(height: 8),
             Text(
               '${(widget.result.confidence * 100).toStringAsFixed(2)}% confidence',
               textAlign: TextAlign.center,
               style: Theme.of(context)
                   .textTheme
-                  .titleMedium,
+                  .titleMedium
+                  ?.copyWith(
+                    color: expressionColor,
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -272,14 +282,5 @@ class _ResultDetailsScreenState
         ),
       ),
     );
-  }
-
-  String _formatExpression(String value) {
-    if (value.isEmpty) {
-      return value;
-    }
-
-    return value[0].toUpperCase() +
-        value.substring(1).toLowerCase();
   }
 }

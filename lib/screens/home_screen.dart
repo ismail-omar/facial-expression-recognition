@@ -13,6 +13,7 @@ import 'camera_screen.dart';
 import 'history_screen.dart';
 import 'preview_screen.dart';
 import 'result_details_screen.dart';
+import '../utils/expression_ui.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -181,15 +182,6 @@ class _HomeScreenState
     await _loadDashboard();
   }
 
-  String _formatExpression(String? expression) {
-    if (expression == null ||
-        expression.isEmpty) {
-      return '-';
-    }
-
-    return expression[0].toUpperCase() +
-        expression.substring(1);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -390,14 +382,19 @@ class _HomeScreenState
           SizedBox(
             width: double.infinity,
             child: StatisticsCard(
-              icon:
-                  Icons.emoji_emotions_rounded,
-              title:
-                  'Most frequent prediction',
-              value: _formatExpression(
-                _statistics
-                    .mostFrequentExpression,
-              ),
+              icon: Icons.emoji_emotions_rounded,
+              title: 'Most frequent prediction',
+              value: _statistics.mostFrequentExpression == null
+                  ? '-'
+                  : ExpressionUi.label(
+                      _statistics.mostFrequentExpression!,
+                  ),
+              color:
+                  _statistics.mostFrequentExpression == null
+                  ? AppColors.primary
+                  : ExpressionUi.color(
+                      _statistics.mostFrequentExpression!,
+            ),
             ),
           ),
         ],
