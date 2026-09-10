@@ -328,7 +328,7 @@ class _CameraScreenState
       return;
     }
 
-    final double? leftEye =
+    /*final double? leftEye =
         face.leftEyeOpenProbability;
 
     final double? rightEye =
@@ -353,7 +353,7 @@ class _CameraScreenState
       });
 
       return;
-    }
+    }*/
 
     setState(() {
       _guideState =

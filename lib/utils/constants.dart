@@ -15,21 +15,21 @@ abstract final class AppConstants {
 
   static const double minimumPredictionConfidence = 0.35;
 
-  static const double minimumFaceWidthRatio = 0.25;
-  static const double minimumFaceHeightRatio = 0.25;
+  static const double minimumFaceWidthRatio = 0.22;
+  static const double minimumFaceHeightRatio = 0.22;
 
-  static const double maximumHeadEulerAngleX = 20;
-  static const double maximumHeadEulerAngleY = 20;
-  static const double maximumHeadEulerAngleZ = 20;
+  static const double maximumHeadEulerAngleX = 25;
+  static const double maximumHeadEulerAngleY = 25;
+  static const double maximumHeadEulerAngleZ = 25;
 
   static const double minimumEyeOpenProbability = 0.35;
 
-  static const double minimumBrightness = 45;
-  static const double maximumBrightness = 225;
-  static const double minimumBlurScore = 40;
+  static const double minimumBrightness = 40;
+  static const double maximumBrightness = 220;
+  static const double minimumBlurScore = 25;
 
   static const double faceCropMargin = 0.18;
-  static const int faceJpegQuality = 95;
+  static const int faceJpegQuality = 100;
 
   static const List<String> fallbackLabels = [
     'angry',

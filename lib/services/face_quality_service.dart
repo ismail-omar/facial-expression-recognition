@@ -39,7 +39,7 @@ class FaceQualityService {
     }
 
     final img.Image orientedImage =
-        img.bakeOrientation(decodedImage);
+        decodedImage;
 
     final Face face = faces.first;
     final List<FaceQualityIssue> issues = [];
@@ -87,7 +87,7 @@ class FaceQualityService {
       );
     }
 
-    final double? leftEyeProbability =
+    /*final double? leftEyeProbability =
         face.leftEyeOpenProbability;
 
     final double? rightEyeProbability =
@@ -103,7 +103,7 @@ class FaceQualityService {
         rightEyeProbability <
             AppConstants.minimumEyeOpenProbability) {
       issues.add(FaceQualityIssue.rightEyeClosed);
-    }
+    }*/
 
     final img.Image faceImage = _cropFaceForAnalysis(
       orientedImage,

@@ -12,6 +12,8 @@ import '../widgets/quality_warning_card.dart';
 import '../models/expression_prediction.dart';
 import '../services/expression_classifier_service.dart';
 import 'result_screen.dart';
+import '../services/image_preprocessing_service.dart';
+
 
 class PreviewScreen extends StatefulWidget {
   const PreviewScreen({
@@ -37,6 +39,10 @@ class _PreviewScreenState extends State<PreviewScreen> {
       _expressionClassifierService =
       ExpressionClassifierService();
 
+  final ImagePreprocessingService
+    _imagePreprocessingService =
+    ImagePreprocessingService();
+
   bool _isClassifying = false;
 
   bool _isProcessing = true;
@@ -47,6 +53,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
   List<Face> _faces = [];
   FaceQualityResult? _qualityResult;
   File? _croppedFaceFile;
+  File? _normalizedImageFile;
 
   @override
   void initState() {
@@ -55,28 +62,43 @@ class _PreviewScreenState extends State<PreviewScreen> {
   }
 
   Future<void> _processImage() async {
+    if (!mounted) {
+    return;
+    }
+
     setState(() {
       _isProcessing = true;
       _errorMessage = null;
     });
 
     try {
-      final List<Face> faces =
-          await _faceDetectionService.detectFaces(
+      // 1) تصحيح اتجاه الصورة أولاً
+      final File normalizedImage =
+          await _imagePreprocessingService
+              .normalizeImage(
         widget.imageFile,
       );
 
+      // 2) ML Kit يعمل على نفس الملف
+      final List<Face> faces =
+          await _faceDetectionService.detectFaces(
+        normalizedImage,
+      );
+
+      // 3) فحص الجودة على نفس الملف
       final FaceQualityResult qualityResult =
           await _faceQualityService.evaluate(
-        imageFile: widget.imageFile,
+        imageFile: normalizedImage,
         faces: faces,
       );
 
       File? croppedFace;
 
+      // 4) القص أيضاً من نفس الملف
       if (faces.length == 1) {
-        croppedFace = await ImageUtils.cropAndSaveFace(
-          sourceFile: widget.imageFile,
+        croppedFace =
+            await ImageUtils.cropAndSaveFace(
+          sourceFile: normalizedImage,
           face: faces.first,
         );
       }
@@ -86,37 +108,50 @@ class _PreviewScreenState extends State<PreviewScreen> {
       }
 
       setState(() {
+        _normalizedImageFile =
+            normalizedImage;
+
         _faces = faces;
-        _qualityResult = qualityResult;
-        _croppedFaceFile = croppedFace;
+
+        _qualityResult =
+            qualityResult;
+
+        _croppedFaceFile =
+            croppedFace;
+
         _isProcessing = false;
       });
 
+      /*
+      * التشغيل التلقائي
+      */
       if (qualityResult.isValid &&
           croppedFace != null &&
           !_autoAnalysisStarted) {
         _autoAnalysisStarted = true;
 
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) {
-          if (mounted) {
-            _analyzeExpression();
-          }
-        },
-      );
-    }
+        WidgetsBinding.instance
+            .addPostFrameCallback(
+          (_) {
+            if (mounted) {
+              _analyzeExpression();
+            }
+          },
+        );
+      }
     } catch (error) {
       if (!mounted) {
         return;
       }
 
       setState(() {
-        _errorMessage = error.toString();
+        _errorMessage =
+            error.toString();
+
         _isProcessing = false;
       });
     }
   }
-
   Future<void> _analyzeExpression() async {
     if (_isClassifying) {
       return;
@@ -151,7 +186,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => ResultScreen(
-            originalImageFile: widget.imageFile,
+            originalImageFile:
+                _normalizedImageFile ??
+                  widget.imageFile,
             croppedFaceFile: _croppedFaceFile!,
             prediction: prediction,
           ),
@@ -248,7 +285,8 @@ class _PreviewScreenState extends State<PreviewScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: Image.file(
-              widget.imageFile,
+              _normalizedImageFile ??
+                widget.imageFile,
               height: 320,
               fit: BoxFit.contain,
             ),
