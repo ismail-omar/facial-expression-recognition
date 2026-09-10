@@ -179,6 +179,10 @@ class ExpressionClassifierService {
         output,
       );
 
+      if (kDebugMode) {
+        print('RAW MODEL OUTPUT: ${output.first}');
+      }
+
       stopwatch.stop();
 
       final List<double> probabilities =

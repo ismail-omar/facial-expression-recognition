@@ -9,8 +9,8 @@ abstract final class AppConstants {
   static const String labelsPath =
       'assets/labels/fer2013_labels.txt';
 
-  static const int modelInputWidth = 160;
-  static const int modelInputHeight = 160;
+  static const int modelInputWidth = 224;
+  static const int modelInputHeight = 224;
   static const int modelInputChannels = 3;
 
   static const double minimumPredictionConfidence = 0.35;

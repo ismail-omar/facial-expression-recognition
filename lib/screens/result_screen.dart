@@ -127,10 +127,6 @@ class _ResultScreenState extends State<ResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final List<MapEntry<String, double>>
-        sortedProbabilities =
-        widget.prediction.sortedProbabilities;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -155,33 +151,33 @@ class _ResultScreenState extends State<ResultScreen> {
                 const SizedBox(height: 20),
               ],
               Row(
-                children: [
-                  const Icon(
-                    Icons.analytics_rounded,
-                    color: AppColors.primary,
+                  children: [
+                    const Icon(
+                      Icons.analytics_rounded,
+                      color: AppColors.primary,
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'All Probabilities',
+                    'Top Prediction',
                     style: Theme.of(context)
                         .textTheme
                         .titleLarge,
                   ),
                 ],
               ),
+
               const SizedBox(height: 20),
-              ...sortedProbabilities.map(
-                (entry) {
-                  return ExpressionProbabilityBar(
-                    expression: entry.key,
-                    probability: entry.value,
-                    isHighest: entry.key ==
-                        widget.prediction
-                            .predictedExpression,
-                  );
-                },
-              ),
+
+              ExpressionProbabilityBar(
+                expression:
+                  widget.prediction.predictedExpression,
+                probability:
+                  widget.prediction.confidence,
+                isHighest: true,
+                ),
+
               const SizedBox(height: 8),
+
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
