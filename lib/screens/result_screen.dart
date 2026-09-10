@@ -9,6 +9,7 @@ import '../services/database_service.dart';
 import '../services/image_storage_service.dart';
 import '../utils/constants.dart';
 import '../widgets/expression_probability_bar.dart';
+import '../utils/expression_ui.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({
@@ -23,17 +24,13 @@ class ResultScreen extends StatefulWidget {
   final ExpressionPrediction prediction;
 
   @override
-  State<ResultScreen> createState() =>
-      _ResultScreenState();
+  State<ResultScreen> createState() => _ResultScreenState();
 }
 
-class _ResultScreenState
-    extends State<ResultScreen> {
-  final DatabaseService _databaseService =
-      DatabaseService.instance;
+class _ResultScreenState extends State<ResultScreen> {
+  final DatabaseService _databaseService = DatabaseService.instance;
 
-  final ImageStorageService _storageService =
-      ImageStorageService();
+  final ImageStorageService _storageService = ImageStorageService();
 
   final Uuid _uuid = const Uuid();
 
@@ -53,45 +50,32 @@ class _ResultScreenState
     String? savedFacePath;
 
     try {
-      final String resultId =
-          _uuid.v4();
+      final String resultId = _uuid.v4();
 
       final SavedImagePaths savedPaths =
-          await _storageService
-              .saveAnalysisImages(
+          await _storageService.saveAnalysisImages(
         resultId: resultId,
-        originalImageFile:
-            widget.originalImageFile,
-        croppedFaceFile:
-            widget.croppedFaceFile,
+        originalImageFile: widget.originalImageFile,
+        croppedFaceFile: widget.croppedFaceFile,
       );
 
-      savedOriginalPath =
-          savedPaths.originalImagePath;
+      savedOriginalPath = savedPaths.originalImagePath;
+      savedFacePath = savedPaths.croppedFacePath;
 
-      savedFacePath =
-          savedPaths.croppedFacePath;
-
-      final ExpressionResult result =
-          ExpressionResult(
+      final ExpressionResult result = ExpressionResult(
         id: resultId,
-        imagePath:
-            savedPaths.originalImagePath,
-        croppedFacePath:
-            savedPaths.croppedFacePath,
-        predictedExpression: widget
-            .prediction.predictedExpression,
-        confidence:
-            widget.prediction.confidence,
+        imagePath: savedPaths.originalImagePath,
+        croppedFacePath: savedPaths.croppedFacePath,
+        predictedExpression:
+            widget.prediction.predictedExpression,
+        confidence: widget.prediction.confidence,
         probabilities: Map<String, double>.from(
           widget.prediction.probabilities,
         ),
         createdAt: DateTime.now(),
       );
 
-      await _databaseService.insertResult(
-        result,
-      );
+      await _databaseService.insertResult(result);
 
       if (!mounted) {
         return;
@@ -102,29 +86,23 @@ class _ResultScreenState
         _isSaved = true;
       });
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Result saved successfully.',
           ),
-          backgroundColor:
-              AppColors.success,
+          backgroundColor: AppColors.success,
         ),
       );
     } catch (error) {
-      if (savedOriginalPath != null ||
-          savedFacePath != null) {
+      if (savedOriginalPath != null || savedFacePath != null) {
         try {
-          await _storageService
-              .deleteAnalysisImages(
-            originalImagePath:
-                savedOriginalPath ?? '',
-            croppedFacePath:
-                savedFacePath ?? '',
+          await _storageService.deleteAnalysisImages(
+            originalImagePath: savedOriginalPath ?? '',
+            croppedFacePath: savedFacePath ?? '',
           );
         } catch (_) {
-          // نحافظ على الخطأ الأصلي.
+          // Keep the original error.
         }
       }
 
@@ -136,8 +114,7 @@ class _ResultScreenState
         _isSaving = false;
       });
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Unable to save result: $error',
@@ -164,20 +141,16 @@ class _ResultScreenState
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _ResultHeader(
-                faceImageFile:
-                    widget.croppedFaceFile,
-                expression: widget.prediction
-                    .predictedExpression,
-                confidence: widget
-                    .prediction.confidence,
+                faceImageFile: widget.croppedFaceFile,
+                expression:
+                    widget.prediction.predictedExpression,
+                confidence: widget.prediction.confidence,
               ),
               const SizedBox(height: 20),
-              if (widget.prediction
-                  .isLowConfidence) ...[
+              if (widget.prediction.isLowConfidence) ...[
                 const _LowConfidenceWarning(),
                 const SizedBox(height: 20),
               ],
@@ -213,18 +186,15 @@ class _ResultScreenState
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius:
-                      BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(
                       Icons.speed_rounded,
                       size: 20,
-                      color:
-                          AppColors.textSecondary,
+                      color: AppColors.textSecondary,
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -236,24 +206,21 @@ class _ResultScreenState
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
-                onPressed:
-                    _isSaving || _isSaved
-                        ? null
-                        : _saveResult,
+                onPressed: _isSaving || _isSaved
+                    ? null
+                    : _saveResult,
                 icon: _isSaving
                     ? const SizedBox(
                         width: 21,
                         height: 21,
-                        child:
-                            CircularProgressIndicator(
+                        child: CircularProgressIndicator(
                           strokeWidth: 2.3,
                           color: Colors.white,
                         ),
                       )
                     : Icon(
                         _isSaved
-                            ? Icons
-                                .check_circle_rounded
+                            ? Icons.check_circle_rounded
                             : Icons.save_rounded,
                       ),
                 label: Text(
@@ -267,8 +234,7 @@ class _ResultScreenState
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: () {
-                  Navigator.of(context)
-                      .popUntil(
+                  Navigator.of(context).popUntil(
                     (route) => route.isFirst,
                   );
                 },
@@ -290,8 +256,7 @@ class _ResultScreenState
                     .textTheme
                     .bodySmall
                     ?.copyWith(
-                      color:
-                          AppColors.textSecondary,
+                      color: AppColors.textSecondary,
                     ),
               ),
             ],
@@ -315,15 +280,26 @@ class _ResultHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color expressionColor =
+        ExpressionUi.color(expression);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: ExpressionUi.backgroundColor(
+          expression,
+          opacity: 0.08,
+        ),
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: expressionColor.withValues(
+            alpha: 0.22,
+          ),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(
-              alpha: 0.05,
+            color: expressionColor.withValues(
+              alpha: 0.08,
             ),
             blurRadius: 20,
             offset: const Offset(0, 8),
@@ -332,22 +308,42 @@ class _ResultHeader extends StatelessWidget {
       ),
       child: Column(
         children: [
-          ClipOval(
-            child: Image.file(
-              faceImageFile,
-              width: 150,
-              height: 150,
-              fit: BoxFit.cover,
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: expressionColor,
+                width: 4,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: expressionColor.withValues(
+                    alpha: 0.20,
+                  ),
+                  blurRadius: 16,
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: Image.file(
+                faceImageFile,
+                width: 150,
+                height: 150,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           const SizedBox(height: 20),
           Text(
-            _formatExpression(expression),
+            ExpressionUi.label(expression),
+            textAlign: TextAlign.center,
             style: Theme.of(context)
                 .textTheme
                 .headlineMedium
                 ?.copyWith(
-                  color: AppColors.primary,
+                  color: expressionColor,
+                  fontWeight: FontWeight.bold,
                 ),
           ),
           const SizedBox(height: 8),
@@ -355,7 +351,10 @@ class _ResultHeader extends StatelessWidget {
             'Confidence',
             style: Theme.of(context)
                 .textTheme
-                .bodyMedium,
+                .bodyMedium
+                ?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -365,25 +364,17 @@ class _ResultHeader extends StatelessWidget {
                 .titleLarge
                 ?.copyWith(
                   fontSize: 28,
+                  color: expressionColor,
+                  fontWeight: FontWeight.bold,
                 ),
           ),
         ],
       ),
     );
   }
-
-  String _formatExpression(String value) {
-    if (value.isEmpty) {
-      return value;
-    }
-
-    return value[0].toUpperCase() +
-        value.substring(1).toLowerCase();
-  }
 }
 
-class _LowConfidenceWarning
-    extends StatelessWidget {
+class _LowConfidenceWarning extends StatelessWidget {
   const _LowConfidenceWarning();
 
   @override
@@ -402,8 +393,7 @@ class _LowConfidenceWarning
         ),
       ),
       child: const Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             Icons.info_outline_rounded,

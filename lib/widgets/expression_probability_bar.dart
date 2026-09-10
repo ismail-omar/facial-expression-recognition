@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../utils/constants.dart';
+//import '../utils/constants.dart';
+
+import '../utils/expression_ui.dart';
 
 class ExpressionProbabilityBar
     extends StatelessWidget {
@@ -20,11 +22,8 @@ class ExpressionProbabilityBar
     final double safeProbability =
         probability.clamp(0.0, 1.0);
 
-    final Color barColor = isHighest
-        ? AppColors.primary
-        : AppColors.secondary.withValues(
-            alpha: 0.65,
-          );
+    final Color barColor =
+        ExpressionUi.color(expression);
 
     return Padding(
       padding: const EdgeInsets.only(
@@ -38,7 +37,7 @@ class ExpressionProbabilityBar
             children: [
               Expanded(
                 child: Text(
-                  _formatExpression(expression),
+                  ExpressionUi.label(expression),
                   style: Theme.of(context)
                       .textTheme
                       .bodyLarge
@@ -81,14 +80,5 @@ class ExpressionProbabilityBar
         ],
       ),
     );
-  }
-
-  String _formatExpression(String value) {
-    if (value.isEmpty) {
-      return value;
-    }
-
-    return value[0].toUpperCase() +
-        value.substring(1).toLowerCase();
   }
 }

@@ -7,12 +7,14 @@ class StatisticsCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.value,
+    this.color = AppColors.primary,
     super.key,
   });
 
   final IconData icon;
   final String title;
   final String value;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -39,14 +41,14 @@ class StatisticsCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppColors.primary
-                  .withValues(alpha: 0.10),
+              color: color.withValues(
+                alpha: 0.10),
               borderRadius:
                   BorderRadius.circular(12),
             ),
             child: Icon(
               icon,
-              color: AppColors.primary,
+              color: color,
               size: 22,
             ),
           ),

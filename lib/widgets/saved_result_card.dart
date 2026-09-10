@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../models/expression_result.dart';
 import '../utils/constants.dart';
+import '../utils/expression_ui.dart';
 
 class SavedResultCard extends StatelessWidget {
   const SavedResultCard({
@@ -29,11 +30,26 @@ class SavedResultCard extends StatelessWidget {
       'dd MMM yyyy • HH:mm',
     ).format(result.createdAt);
 
+
+    final Color expressionColor =
+        ExpressionUi.color(
+      result.predictedExpression,
+    );
+
     return Card(
       margin: const EdgeInsets.only(
         bottom: 14,
       ),
       clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(
+              color: expressionColor,
+              width: 5,
+            ),
+          ),
+        ),
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -70,17 +86,16 @@ class SavedResultCard extends StatelessWidget {
                       CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _formatExpression(
-                        result
-                            .predictedExpression,
+                      ExpressionUi.label(
+                        result.predictedExpression,
                       ),
                       style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
+                        .textTheme
+                      .titleMedium
+                      ?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: expressionColor,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -122,15 +137,7 @@ class SavedResultCard extends StatelessWidget {
           ),
         ),
       ),
+      )
     );
-  }
-
-  String _formatExpression(String value) {
-    if (value.isEmpty) {
-      return value;
-    }
-
-    return value[0].toUpperCase() +
-        value.substring(1).toLowerCase();
   }
 }
