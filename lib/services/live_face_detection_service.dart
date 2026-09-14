@@ -42,6 +42,7 @@ class LiveFaceDetectionService {
     required CameraDescription camera,
     required DeviceOrientation deviceOrientation,
   }) {
+    
     final InputImageRotation? rotation =
         _calculateRotation(
       camera: camera,

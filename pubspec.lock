@@ -45,10 +45,10 @@ packages:
     dependency: "direct main"
     description:
       name: camera_android
-      sha256: "8b3795d2f7f3c7e705821fe6cd82b7dd56c8a8e66f2df4ac6daf659876967dbf"
+      sha256: "2bb7a5a070dc61a03721ab8b55d4d24a74683da32e9c9a47257b4fd4956f2280"
       url: "https://pub.dev"
     source: hosted
-    version: "0.10.11"
+    version: "0.10.11+1"
   camera_android_camerax:
     dependency: transitive
     description:
