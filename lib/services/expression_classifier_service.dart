@@ -7,6 +7,7 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 
 import '../models/expression_prediction.dart';
 import '../utils/constants.dart';
+import 'package:path_provider/path_provider.dart';
 
 class ExpressionClassifierService {
   Interpreter? _interpreter;
@@ -160,6 +161,26 @@ class ExpressionClassifierService {
         height: AppConstants.modelInputHeight,
         interpolation: img.Interpolation.linear,
       );
+
+      if (kDebugMode) {
+        final Directory? externalDir =
+            await getExternalStorageDirectory();
+
+      if (externalDir != null) {
+        final File debugFile = File(
+          '${externalDir.path}/exact_model_input_224.png',
+      );
+
+      await debugFile.writeAsBytes(
+        img.encodePng(resizedImage),
+        flush: true,
+      );
+
+      print(
+        'EXACT MODEL INPUT SAVED: ${debugFile.path}',
+      );
+    }
+  }
 
       final List<List<List<List<double>>>> input =
           _createFloatInput(resizedImage);

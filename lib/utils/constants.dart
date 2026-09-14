@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppConstants {
-  static const String appName = 'Facial Expression Recognition';
+  static const String appName = 'كيفك';
 
   static const String modelPath =
       'assets/models/fer2013_mobilenetv3_float16.tflite';
@@ -43,15 +43,24 @@ abstract final class AppConstants {
 }
 
 abstract final class AppColors {
-  static const Color primary = Color(0xFF5B67F1);
-  static const Color secondary = Color(0xFF7B61FF);
-  static const Color background = Color(0xFFF7F8FC);
+  // Main brand colors
+  static const Color primary = Color(0xFF0F766E);
+  static const Color secondary = Color(0xFF06B6D4);
+
+  // Extra brand shades
+  static const Color accent = Color(0xFF22D3EE);
+  static const Color primaryLight = Color(0xFFCCFBF1);
+
+  // Backgrounds
+  static const Color background = Color(0xFFF8FAFC);
   static const Color surface = Colors.white;
 
-  static const Color success = Color(0xFF20B26B);
-  static const Color warning = Color(0xFFF5A524);
-  static const Color error = Color(0xFFE5484D);
+  // Status colors
+  static const Color success = Color(0xFF10B981);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color error = Color(0xFFEF4444);
 
-  static const Color textPrimary = Color(0xFF202334);
-  static const Color textSecondary = Color(0xFF71758A);
+  // Text
+  static const Color textPrimary = Color(0xFF0F172A);
+  static const Color textSecondary = Color(0xFF64748B);
 }
