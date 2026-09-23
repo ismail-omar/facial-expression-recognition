@@ -443,7 +443,7 @@ Prediction performance can also be affected by:
 
 ## 👨‍💻 Author
 
-**Ismail Omar**
+**Ismail Jomaa Alismail Alomar**
 
 Master of Computer Science  
 Syrian Virtual University
